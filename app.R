@@ -54,11 +54,11 @@ ui <- dashboardPage(
                       selected = "2016"),
           selectInput(inputId = "reference_year", label = "Reference Year", 
                       choices = c("2011", "2012"), 
-                      selected = "2011"),
-          div(
-               img(src = "crown.png", 
-                   height = 80), 
-               style="text-align: center;")
+                      selected = "2011")
+          #div(
+               #img(src = "crown.png", 
+                   #height = 80), 
+               #style="text-align: center;")
      ),
      dashboardBody(
           fluidRow(
@@ -94,7 +94,13 @@ ui <- dashboardPage(
                    DT::dataTableOutput(
                         "table"
                    ))
-               )
+               ), 
+           fluidRow(
+               div(
+                    img(src = "mailman_biostats_4c.png", 
+                        height = 100),
+                    style="text-align: center;")
+             )
           )
      )
   
