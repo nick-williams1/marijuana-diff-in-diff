@@ -193,7 +193,7 @@ server <- function(input, output) {
                                           "Upper bound" = ci_upper_diffdiff)
           
           list("Difference-in-difference" = diff_diff(), 
-               "Standard error" = se_diff_diff(), 
+               "Standard error" = round(se_diff_diff(), 4), 
                "95% Confidence interval" = interval)
      })
      
