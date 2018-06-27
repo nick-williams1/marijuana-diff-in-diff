@@ -5,7 +5,7 @@ library(readr)
 library(dplyr)
 library(DT)
 
-mj <- read_csv("C:/Users/niwi8/OneDrive/Documents/Practicum/MJ_DinD/Data/MJ_proportions.csv",
+mj <- read_csv("MJ_proportions.csv",
                col_names = TRUE)
 
 mj$state <- as.factor(mj$state)
@@ -37,7 +37,9 @@ ui <- dashboardPage(
      dashboardSidebar(
           selectInput(inputId = "state", label = "State", 
                       choices = c("Colorado" = "colorado", 
-                                  "Washington" = "wash"), 
+                                  "Washington" = "wash", 
+                                  "Oregon" = "oregon", 
+                                  "Alaska" = "alaska"), 
                       selected = "colorado"),
           selectInput(inputId = "drug", label = "Drug", 
                       choices =  c("Alcohol" = "alcohol", 
@@ -61,6 +63,8 @@ ui <- dashboardPage(
                #style="text-align: center;")
      ),
      dashboardBody(
+       tabsetPanel(type = "tabs",
+                   tabPanel("Difference-in-Difference Analysis",
           fluidRow(
                column(width = 4,
                       box(title = "Empirical approach", 
@@ -86,23 +90,62 @@ ui <- dashboardPage(
                                outputId = "hybrid"
                           ))
                       )
-               ),
+               )
+          ,
           fluidRow(
-               box(title = "Data", 
+               box(title = "Data used for calculations", 
                    status = "primary",
                    width = 12,
                    DT::dataTableOutput(
                         "table"
                    ))
                ), 
-           fluidRow(
+          fluidRow(
                div(
-                    img(src = "mailman_biostats_4c.png", 
-                        height = 100),
+                    img(src = "mailman_biostats_4c_horiz.png", 
+                        height = 60),
                     style="text-align: center;")
-             )
+               )
+          ), 
+          tabPanel("Prevalence Change", 
+                   fluidRow(
+                     column(width = 6, 
+                            box(title = "State Prevalence", 
+                                status = "primary", 
+                                width = NULL, 
+                                verbatimTextOutput(
+                                  outputId = "state_diff"
+                                  )
+                                )
+                            ), 
+                       column(width = 6, 
+                              box(title = "U.S. Prevalence", 
+                                  status = "primary", 
+                                  width = NULL, 
+                                  verbatimTextOutput(
+                                    outputId = "us_diff"
+                                    )
+                                  )
+                              )
+                     ), 
+                   fluidRow(
+                     box(title = "Data used for calculations", 
+                         status = "primary",
+                         width = 12,
+                         DT::dataTableOutput(
+                           "table_1"
+                         ))
+                   ), 
+                   fluidRow(
+                     div(
+                       img(src = "mailman_biostats_4c_horiz.png", 
+                           height = 60),
+                       style="text-align: center;")
+                   )
+                   )
           )
      )
+)
   
 # Define server logic 
 
@@ -221,29 +264,68 @@ server <- function(input, output) {
                "95% Confidence interval" = interval2)
      })
      
+     # us difference confidence interval
+     
+     output$us_diff <- renderPrint({
+       ci_us <- round(quantile(difference2(), c(0.025, 0.975)), 4)
+       
+       list("Simulated Prevalence Difference" = round(mean(difference2()), 4), 
+            "95% Confidence Interval" = ci_us)
+     })
+     
+     # state difference confidence interval
+     
+     output$state_diff <- renderPrint({
+       ci_state <- round(quantile(difference1(), c(0.025, 0.975)), 4)
+       
+       list("Simulated Prevalence difference" = round(mean(difference1()), 4), 
+            "95% Confidence Interval" = ci_state)
+     })
+     
      # data table
      
      mj_1 <- mj %>% select(state:se)
      
      output$table <- DT::renderDataTable({
-          DT::datatable(mj_1[which(mj$state == input$state & 
-                                      mj$drug == input$drug &
-                                      mj$age == input$age  & 
-                                      mj$year == input$year |
-                                      mj$state == "us" &
-                                      mj$drug == input$drug & 
-                                      mj$age == input$age & 
-                                      mj$year == input$year |
-                                      mj$state == input$state &
-                                      mj$drug == input$drug &
-                                      mj$age == input$age & 
-                                      mj$year == input$reference_year |
-                                      mj$state == "us" & 
-                                      mj$drug == input$drug & 
-                                      mj$age == input$age &
-                                      mj$year == input$reference_year), ], 
+          DT::datatable(mj_1[which(mj$state == input$state &
+                                        mj$drug == input$drug &
+                                        mj$age == input$age  &
+                                        mj$year == input$year |
+                                        mj$state == input$state &
+                                        mj$drug == input$drug &
+                                        mj$age == input$age &
+                                        mj$year == input$reference_year |
+                                        mj$state == "us" &
+                                        mj$drug == input$drug &
+                                        mj$age == input$age &
+                                        mj$year == input$year |
+                                        mj$state == "us" &
+                                        mj$drug == input$drug &
+                                        mj$age == input$age &
+                                        mj$year == input$reference_year), ], 
                         rownames = FALSE, 
-                        options = list(pageLength = 4))
+                        options = list(dom = 't'))
+     })
+     
+     output$table_1 <- DT::renderDataTable({
+       DT::datatable(mj_1[which(mj$state == input$state &
+                                  mj$drug == input$drug &
+                                  mj$age == input$age  &
+                                  mj$year == input$year |
+                                  mj$state == input$state &
+                                  mj$drug == input$drug &
+                                  mj$age == input$age &
+                                  mj$year == input$reference_year |
+                                  mj$state == "us" &
+                                  mj$drug == input$drug &
+                                  mj$age == input$age &
+                                  mj$year == input$year |
+                                  mj$state == "us" &
+                                  mj$drug == input$drug &
+                                  mj$age == input$age &
+                                  mj$year == input$reference_year), ], 
+                     rownames = FALSE, 
+                     options = list(dom = 't'))
      })
 }
 
